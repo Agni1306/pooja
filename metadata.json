@@ -1,0 +1,8 @@
+{
+  "name": "DigiThela",
+  "description": "DigiThela – Empowering Local Vendors Digitally across Mira-Bhayandar with online storefronts, digital payment literacy, and local discovery.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

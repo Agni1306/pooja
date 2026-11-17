@@ -1,0 +1,153 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  CUSTOMER
+  VENDOR
+  ADMIN
+}
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String?  @unique
+  mobileNumber String?  @unique
+  passwordHash String
+  role         UserRole @default(CUSTOMER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  vendorProfile    VendorProfile?
+  learningProgress LearningProgress[]
+  favorites        VendorFavorite[]
+
+  @@index([role])
+  @@map("users")
+}
+
+model VendorProfile {
+  id                 String             @id @default(cuid())
+  userId             String             @unique
+  businessName       String
+  category           String
+  description        String             @db.Text
+  address            String
+  area               String
+  city               String             @default("Mira-Bhayandar")
+  openingTime        String
+  closingTime        String
+  contactNumber      String
+  upiId              String?
+  profileImage       String?
+  coverImage         String?
+  verificationStatus VerificationStatus @default(PENDING)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  products    Product[]
+  favoritedBy VendorFavorite[]
+  views       VendorView[]
+
+  @@index([category])
+  @@index([area])
+  @@index([city])
+  @@index([verificationStatus])
+  @@index([businessName])
+  @@map("vendor_profiles")
+}
+
+model Product {
+  id           String   @id @default(cuid())
+  vendorId     String
+  productName  String
+  description  String   @db.Text
+  category     String
+  price        Decimal  @db.Decimal(10, 2)
+  unit         String   @default("per piece")
+  image        String?
+  availability Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  vendor VendorProfile @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  @@index([vendorId])
+  @@index([category])
+  @@index([productName])
+  @@index([availability])
+  @@map("products")
+}
+
+model LearningMaterial {
+  id                   String   @id @default(cuid())
+  slug                 String   @unique
+  title                String
+  description          String   @db.Text
+  content              String   @db.Text
+  category             String
+  difficultyLevel      String
+  estimatedReadingTime String
+  image                String?
+  createdAt            DateTime @default(now())
+
+  progress LearningProgress[]
+
+  @@index([category])
+  @@index([difficultyLevel])
+  @@map("learning_materials")
+}
+
+model LearningProgress {
+  id                 String    @id @default(cuid())
+  userId             String
+  learningMaterialId String
+  isCompleted        Boolean   @default(false)
+  completedAt        DateTime?
+
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  learningMaterial LearningMaterial @relation(fields: [learningMaterialId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, learningMaterialId])
+  @@index([userId])
+  @@index([learningMaterialId])
+  @@map("learning_progress")
+}
+
+model VendorFavorite {
+  id         String   @id @default(cuid())
+  customerId String
+  vendorId   String
+  createdAt  DateTime @default(now())
+
+  customer User          @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  vendor   VendorProfile @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  @@unique([customerId, vendorId])
+  @@index([customerId])
+  @@index([vendorId])
+  @@map("vendor_favorites")
+}
+
+model VendorView {
+  id       String   @id @default(cuid())
+  vendorId String
+  viewedAt DateTime @default(now())
+
+  vendor VendorProfile @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  @@index([vendorId])
+  @@index([viewedAt])
+  @@map("vendor_views")
+}
